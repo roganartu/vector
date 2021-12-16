@@ -250,7 +250,7 @@ mod test {
         }
 
         fn outputs(&self) -> Vec<Output> {
-            vec![Output::default(DataType::Any)]
+            vec![Output::default(DataType::all())]
         }
     }
 
@@ -266,11 +266,11 @@ mod test {
         }
 
         fn input_type(&self) -> DataType {
-            DataType::Any
+            DataType::all()
         }
 
         fn outputs(&self) -> Vec<Output> {
-            vec![Output::default(DataType::Any)]
+            vec![Output::default(DataType::all())]
         }
     }
 
@@ -286,7 +286,7 @@ mod test {
         }
 
         fn input_type(&self) -> DataType {
-            DataType::Any
+            DataType::all()
         }
     }
 
