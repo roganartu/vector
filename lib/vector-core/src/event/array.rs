@@ -65,6 +65,8 @@ pub enum EventArray {
     Logs(LogArray),
     /// An array of type `Metric`
     Metrics(MetricArray),
+    /// An array of type `LogEvent` but for Traces
+    Traces(LogArray),
 }
 
 impl From<Event> for EventArray {
@@ -72,6 +74,7 @@ impl From<Event> for EventArray {
         match event {
             Event::Log(log) => Self::Logs(vec![log]),
             Event::Metric(metric) => Self::Metrics(vec![metric]),
+            Event::Trace(trace) => Self::Traces(vec![trace]),
         }
     }
 }
@@ -81,6 +84,7 @@ impl ByteSizeOf for EventArray {
         match self {
             Self::Logs(a) => a.allocated_bytes(),
             Self::Metrics(a) => a.allocated_bytes(),
+            Self::Traces(a) => a.allocated_bytes(),
         }
     }
 }
@@ -92,6 +96,7 @@ impl EventContainer for EventArray {
         match self {
             Self::Logs(a) => EventArrayIntoIter::Logs(a.into_iter()),
             Self::Metrics(a) => EventArrayIntoIter::Metrics(a.into_iter()),
+            Self::Traces(a) => EventArrayIntoIter::Traces(a.into_iter()),
         }
     }
 }
@@ -102,6 +107,8 @@ pub enum EventArrayIntoIter {
     Logs(vec::IntoIter<LogEvent>),
     /// An iterator over type `Metric`.
     Metrics(vec::IntoIter<Metric>),
+    /// An iterator over type `LogEvent` but for Traces.
+    Traces(vec::IntoIter<LogEvent>),
 }
 
 impl Iterator for EventArrayIntoIter {
@@ -111,6 +118,7 @@ impl Iterator for EventArrayIntoIter {
         match self {
             Self::Logs(i) => i.next().map(Into::into),
             Self::Metrics(i) => i.next().map(Into::into),
+            Self::Traces(i) => i.next().map(Into::into),
         }
     }
 }
