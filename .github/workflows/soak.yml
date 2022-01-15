@@ -139,7 +139,7 @@ jobs:
   build-image-baseline:
     name: Build baseline 'soak-vector' container
     if: ${{ github.actor != 'dependabot[bot]' }}
-    runs-on: [self-hosted, linux, x64, general]
+    runs-on: [self-hosted, linux, x64, soak_builder]
     needs: [compute-soak-meta]
     steps:
       - uses: colpal/actions-clean@v1
@@ -186,7 +186,7 @@ jobs:
   build-image-comparison:
     name: Build comparison 'soak-vector' container
     if: ${{ github.actor != 'dependabot[bot]' }}
-    runs-on: [self-hosted, linux, x64, general]
+    runs-on: [self-hosted, linux, x64, soak_builder]
     needs: [compute-soak-meta]
     steps:
       - uses: colpal/actions-clean@v1
