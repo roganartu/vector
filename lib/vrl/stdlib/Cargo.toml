@@ -12,6 +12,7 @@ lookup_lib = {package = "lookup", path = "../../lookup" }
 datadog-search-syntax = { path = "../../datadog/search-syntax", optional = true }
 datadog-filter = { path = "../../datadog/filter", optional = true }
 datadog-grok = { path = "../../datadog/grok", optional = true }
+prometheus-parser = { path = "../../prometheus-parser", optional = true }
 
 base64 = { version = "0.13", optional = true }
 bytes = { version = "1.1.0", optional = true }
@@ -126,6 +127,7 @@ default = [
     "parse_linux_authorization",
     "parse_logfmt",
     "parse_nginx_log",
+    "parse_prometheus_text",
     "parse_query_string",
     "parse_regex",
     "parse_regex_all",
@@ -249,6 +251,7 @@ parse_klog = ["chrono", "lazy_static", "regex"]
 parse_linux_authorization = ["parse_syslog", "chrono", "shared/conversion"]
 parse_logfmt = ["parse_key_value"]
 parse_nginx_log = ["chrono", "regex", "lazy_static", "shared/conversion"]
+parse_prometheus_text = ["prometheus-parser"]
 parse_query_string = ["url"]
 parse_regex = ["regex"]
 parse_regex_all = ["regex"]

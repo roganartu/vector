@@ -8620,6 +8620,7 @@ dependencies = [
  "md-5 0.10.0",
  "nom 7.1.0",
  "percent-encoding",
+ "prometheus-parser",
  "regex",
  "roxmltree",
  "rust_decimal",

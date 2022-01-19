@@ -158,6 +158,8 @@ mod parse_linux_authorization;
 mod parse_logfmt;
 #[cfg(feature = "parse_nginx_log")]
 mod parse_nginx_log;
+#[cfg(feature = "parse_prometheus_text")]
+mod parse_prometheus_text;
 #[cfg(feature = "parse_query_string")]
 mod parse_query_string;
 #[cfg(feature = "parse_regex")]
@@ -397,6 +399,8 @@ pub use parse_linux_authorization::ParseLinuxAuthorization;
 pub use parse_logfmt::ParseLogFmt;
 #[cfg(feature = "parse_nginx_log")]
 pub use parse_nginx_log::ParseNginxLog;
+#[cfg(feature = "parse_prometheus_text")]
+pub use parse_prometheus_text::ParsePrometheusText;
 #[cfg(feature = "parse_query_string")]
 pub use parse_query_string::ParseQueryString;
 #[cfg(feature = "parse_regex")]
@@ -651,6 +655,8 @@ pub fn all() -> Vec<Box<dyn vrl::Function>> {
         Box::new(ParseLogFmt),
         #[cfg(feature = "parse_nginx_log")]
         Box::new(ParseNginxLog),
+        #[cfg(feature = "parse_prometheus_text")]
+        Box::new(ParsePrometheusText),
         #[cfg(feature = "parse_query_string")]
         Box::new(ParseQueryString),
         #[cfg(feature = "parse_regex")]
