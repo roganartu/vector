@@ -86,23 +86,28 @@ impl Expression for ParsePrometheusTextFn {
                             vec![]
                             // entry.insert("type".to_string(), Value::from("histogram"));
                         }
-                        prometheus_parser::GroupKind::Untyped(metric_map) => metric_map
-                            .into_iter()
-                            .map(|(group_key, sample)| {
-                                let mut entry = map![
-                                    "name": Value::from(metric_group.name.clone()),
-                                    "value": Value::from(sample.value),
-                                    // TODO map this into k: Value::from(v)
-                                    // "labels": Value::from(group_key.labels),
-                                ];
-                                // match group_key.timestamp {
-                                //     Some(v) => entry.insert("timestamp", Value::from(v)),
-                                //     None => {},
-                                // };
-                                entry
-                            })
-                            .collect::<Vec<_>>()
-                            .into(),
+                        prometheus_parser::GroupKind::Untyped(metric_map) => {
+                            metric_map
+                                .into_iter()
+                                .map(|(group_key, sample)| {
+                                    let mut entry = map![
+                                        "name": Value::from(metric_group.name.clone()),
+                                        "value": Value::from(sample.value),
+                                        // TODO map this into k: Value::from(v)
+                                        // "labels": Value::from(group_key.labels),
+                                    ];
+                                    // TODO get this working
+                                    match group_key.timestamp {
+                                        Some(v) => {
+                                            entry.insert("timestamp".to_string(), Value::from(v))
+                                        }
+                                        None => None,
+                                    };
+                                    entry
+                                })
+                                .collect::<Vec<_>>()
+                                .into()
+                        }
                     }
                     // })
                 })
@@ -155,7 +160,6 @@ mod tests {
                 map![
                     "name": "metric_without_timestamp_and_labels",
                     "value": 12.47,
-                    // TODO what will the timestamp be? How do we assert that?
                 ],
             ]),
             tdef: TypeDef::new().fallible().array::<TypeDef>(vec![
