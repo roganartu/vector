@@ -55,20 +55,6 @@ impl Expression for ParsePrometheusTextFn {
             Ok(parsed) => Ok(parsed
                 .into_iter()
                 .map(|metric_group| {
-                    // metric_group.metrics.into_iter().map(|group_key, metric| {
-                    // let mut entry = map![
-                    // TODO export the type as a string
-                    // Then the log_to_metric config might become something like:
-                    //   [[transforms.my_transform_id.metrics]]
-                    //   type = "{{type}}"
-                    //   field = "value"
-                    //   name = "{{name}}"
-                    //   tags = "{{tags}}"
-                    // This might... just work?
-                    // "name": metric_group.name,
-                    // "timestamp": group_key.timestamp,
-                    // "labels": group_key.labels,
-                    // ];
                     match metric_group.metrics {
                         prometheus_parser::GroupKind::Counter(metric_map) => {
                             vec![]
@@ -82,34 +68,54 @@ impl Expression for ParsePrometheusTextFn {
                             vec![]
                             // entry.insert("type".to_string(), Value::from("summary"));
                         }
-                        prometheus_parser::GroupKind::Histogram(metric_map) => {
-                            vec![]
-                            // entry.insert("type".to_string(), Value::from("histogram"));
-                        }
-                        prometheus_parser::GroupKind::Untyped(metric_map) => {
-                            metric_map
-                                .into_iter()
-                                .map(|(group_key, sample)| {
-                                    let mut entry = map![
-                                        "name": Value::from(metric_group.name.clone()),
-                                        "value": Value::from(sample.value),
-                                        // TODO map this into k: Value::from(v)
-                                        // "labels": Value::from(group_key.labels),
-                                    ];
-                                    // TODO get this working
-                                    match group_key.timestamp {
-                                        Some(v) => {
-                                            entry.insert("timestamp".to_string(), Value::from(v))
-                                        }
-                                        None => None,
-                                    };
-                                    entry
-                                })
-                                .collect::<Vec<_>>()
-                                .into()
-                        }
+                        prometheus_parser::GroupKind::Histogram(metric_map) => metric_map
+                            .into_iter()
+                            .map(|(group_key, sample)| {
+                                let mut entry = map![
+                                    "name": Value::from(metric_group.name.clone()),
+                                    "buckets": sample.buckets.into_iter().map(|val| {
+                                        map![
+                                            "bucket": Value::from(val.bucket),
+                                            "count": Value::from(val.count),
+                                        ]
+                                    }).collect::<Vec<_>>(),
+                                    "sum": Value::from(sample.sum),
+                                    "count": Value::from(sample.count),
+                                    "labels": group_key.labels.into_iter().map(|(key, val)| {
+                                        (key, Value::from(val))
+                                    }).collect::<BTreeMap<_, _>>(),
+                                ];
+                                match group_key.timestamp {
+                                    Some(v) => {
+                                        entry.insert("timestamp".to_string(), Value::from(v))
+                                    }
+                                    None => None,
+                                };
+                                entry
+                            })
+                            .collect::<Vec<_>>()
+                            .into(),
+                        prometheus_parser::GroupKind::Untyped(metric_map) => metric_map
+                            .into_iter()
+                            .map(|(group_key, sample)| {
+                                let mut entry = map![
+                                    "name": Value::from(metric_group.name.clone()),
+                                    "value": Value::from(sample.value),
+                                    "labels": group_key.labels.into_iter().map(|(key, val)| {
+                                        (key, Value::from(val))
+                                    }).collect::<BTreeMap<_, _>>(),
+                                ];
+                                match group_key.timestamp {
+                                    Some(v) => {
+                                        entry.insert("timestamp".to_string(), Value::from(v))
+                                    }
+                                    None => None,
+                                };
+                                entry
+                            })
+                            .collect::<Vec<_>>()
+                            .into(),
                     }
-                    // })
                 })
                 .flatten()
                 .collect::<Vec<_>>()
@@ -160,6 +166,54 @@ mod tests {
                 map![
                     "name": "metric_without_timestamp_and_labels",
                     "value": 12.47,
+                    "labels": map![],
+                ],
+            ]),
+            tdef: TypeDef::new().fallible().array::<TypeDef>(vec![
+                TypeDef::new().object::<&str, TypeDef>(inner_type_def())
+            ]),
+            tz: shared::TimeZone::default(),
+        }
+
+        no_labels_gauge_with_timestamp_valid {
+            args: func_args![value: r#"metric_with_timestamp_and_no_labels 12.47 1642734998"#],
+            want: Ok(vec![
+                map![
+                    "name": "metric_with_timestamp_and_no_labels",
+                    "value": 12.47,
+                    "labels": map![],
+                    "timestamp": 1642734998,
+                ],
+            ]),
+            tdef: TypeDef::new().fallible().array::<TypeDef>(vec![
+                TypeDef::new().object::<&str, TypeDef>(inner_type_def())
+            ]),
+            tz: shared::TimeZone::default(),
+        }
+
+        labels_gauge_valid {
+            args: func_args![value: r#"metric_without_timestamp{foo="bar"} 12.47"#],
+            want: Ok(vec![
+                map![
+                    "name": "metric_without_timestamp",
+                    "value": 12.47,
+                    "labels": map!["foo": "bar"],
+                ],
+            ]),
+            tdef: TypeDef::new().fallible().array::<TypeDef>(vec![
+                TypeDef::new().object::<&str, TypeDef>(inner_type_def())
+            ]),
+            tz: shared::TimeZone::default(),
+        }
+
+        labels_gauge_with_timestamp_valid {
+            args: func_args![value: r#"metric_without_timestamp{foo="bar"} 12.47 1642734900"#],
+            want: Ok(vec![
+                map![
+                    "name": "metric_without_timestamp",
+                    "value": 12.47,
+                    "labels": map!["foo": "bar"],
+                    "timestamp": 1642734900,
                 ],
             ]),
             tdef: TypeDef::new().fallible().array::<TypeDef>(vec![
