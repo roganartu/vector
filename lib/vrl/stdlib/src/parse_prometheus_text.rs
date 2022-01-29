@@ -54,74 +54,86 @@ impl Expression for ParsePrometheusTextFn {
         match parse_text(&message) {
             Ok(parsed) => Ok(parsed
                 .into_iter()
-                .map(|metric_group| match metric_group.metrics {
-                    prometheus_parser::GroupKind::Gauge(metric_map)
-                    | prometheus_parser::GroupKind::Untyped(metric_map)
-                    | prometheus_parser::GroupKind::Counter(metric_map) => metric_map
-                        .into_iter()
-                        .map(|(group_key, sample)| {
-                            let mut entry = map![
-                                "name": Value::from(metric_group.name.clone()),
-                                "value": Value::from(sample.value),
-                                "labels": group_key.labels.into_iter().map(|(key, val)| {
-                                    (key, Value::from(val))
-                                }).collect::<BTreeMap<_, _>>(),
-                            ];
-                            match group_key.timestamp {
-                                Some(v) => entry.insert("timestamp".to_string(), Value::from(v)),
-                                None => None,
-                            };
-                            entry
-                        })
-                        .collect::<Vec<_>>(),
-                    prometheus_parser::GroupKind::Summary(metric_map) => metric_map
-                        .into_iter()
-                        .map(|(group_key, sample)| {
-                            let mut entry = map![
-                                "name": Value::from(metric_group.name.clone()),
-                                "quantiles": sample.quantiles.into_iter().map(|val| {
-                                    map![
-                                        "quantile": Value::from(val.quantile),
-                                        "value": Value::from(val.value),
-                                    ]
-                                }).collect::<Vec<_>>(),
-                                "sum": Value::from(sample.sum),
-                                "count": Value::from(sample.count),
-                                "labels": group_key.labels.into_iter().map(|(key, val)| {
-                                    (key, Value::from(val))
-                                }).collect::<BTreeMap<_, _>>(),
-                            ];
-                            match group_key.timestamp {
-                                Some(v) => entry.insert("timestamp".to_string(), Value::from(v)),
-                                None => None,
-                            };
-                            entry
-                        })
-                        .collect::<Vec<_>>(),
-                    prometheus_parser::GroupKind::Histogram(metric_map) => metric_map
-                        .into_iter()
-                        .map(|(group_key, sample)| {
-                            let mut entry = map![
-                                "name": Value::from(metric_group.name.clone()),
-                                "buckets": sample.buckets.into_iter().map(|val| {
-                                    map![
-                                        "bucket": Value::from(val.bucket),
-                                        "count": Value::from(val.count),
-                                    ]
-                                }).collect::<Vec<_>>(),
-                                "sum": Value::from(sample.sum),
-                                "count": Value::from(sample.count),
-                                "labels": group_key.labels.into_iter().map(|(key, val)| {
-                                    (key, Value::from(val))
-                                }).collect::<BTreeMap<_, _>>(),
-                            ];
-                            match group_key.timestamp {
-                                Some(v) => entry.insert("timestamp".to_string(), Value::from(v)),
-                                None => None,
-                            };
-                            entry
-                        })
-                        .collect::<Vec<_>>(),
+                .map(|metric_group| {
+                    let metric_type = metric_group.metrics.type_to_str();
+                    match metric_group.metrics {
+                        prometheus_parser::GroupKind::Gauge(metric_map)
+                        | prometheus_parser::GroupKind::Untyped(metric_map)
+                        | prometheus_parser::GroupKind::Counter(metric_map) => metric_map
+                            .into_iter()
+                            .map(|(group_key, sample)| {
+                                let mut entry = map![
+                                    "type": Value::from(metric_type),
+                                    "name": Value::from(metric_group.name.clone()),
+                                    "value": Value::from(sample.value),
+                                    "labels": group_key.labels.into_iter().map(|(key, val)| {
+                                        (key, Value::from(val))
+                                    }).collect::<BTreeMap<_, _>>(),
+                                ];
+                                match group_key.timestamp {
+                                    Some(v) => {
+                                        entry.insert("timestamp".to_string(), Value::from(v))
+                                    }
+                                    None => None,
+                                };
+                                entry
+                            })
+                            .collect::<Vec<_>>(),
+                        prometheus_parser::GroupKind::Summary(metric_map) => metric_map
+                            .into_iter()
+                            .map(|(group_key, sample)| {
+                                let mut entry = map![
+                                    "type": Value::from(metric_type),
+                                    "name": Value::from(metric_group.name.clone()),
+                                    "quantiles": sample.quantiles.into_iter().map(|val| {
+                                        map![
+                                            "quantile": Value::from(val.quantile),
+                                            "value": Value::from(val.value),
+                                        ]
+                                    }).collect::<Vec<_>>(),
+                                    "sum": Value::from(sample.sum),
+                                    "count": Value::from(sample.count),
+                                    "labels": group_key.labels.into_iter().map(|(key, val)| {
+                                        (key, Value::from(val))
+                                    }).collect::<BTreeMap<_, _>>(),
+                                ];
+                                match group_key.timestamp {
+                                    Some(v) => {
+                                        entry.insert("timestamp".to_string(), Value::from(v))
+                                    }
+                                    None => None,
+                                };
+                                entry
+                            })
+                            .collect::<Vec<_>>(),
+                        prometheus_parser::GroupKind::Histogram(metric_map) => metric_map
+                            .into_iter()
+                            .map(|(group_key, sample)| {
+                                let mut entry = map![
+                                    "type": Value::from(metric_type),
+                                    "name": Value::from(metric_group.name.clone()),
+                                    "buckets": sample.buckets.into_iter().map(|val| {
+                                        map![
+                                            "bucket": Value::from(val.bucket),
+                                            "count": Value::from(val.count),
+                                        ]
+                                    }).collect::<Vec<_>>(),
+                                    "sum": Value::from(sample.sum),
+                                    "count": Value::from(sample.count),
+                                    "labels": group_key.labels.into_iter().map(|(key, val)| {
+                                        (key, Value::from(val))
+                                    }).collect::<BTreeMap<_, _>>(),
+                                ];
+                                match group_key.timestamp {
+                                    Some(v) => {
+                                        entry.insert("timestamp".to_string(), Value::from(v))
+                                    }
+                                    None => None,
+                                };
+                                entry
+                            })
+                            .collect::<Vec<_>>(),
+                    }
                 })
                 .flatten()
                 .collect::<Vec<_>>()
@@ -171,6 +183,7 @@ mod tests {
                 map![
                     "name": "metric_without_timestamp_and_labels",
                     "value": 12.47,
+                    "type": "untyped",
                     "labels": map![],
                 ],
             ]),
@@ -186,6 +199,7 @@ mod tests {
                 map![
                     "name": "metric_with_timestamp_and_no_labels",
                     "value": 12.47,
+                    "type": "untyped",
                     "labels": map![],
                     "timestamp": 1642734998,
                 ],
@@ -202,6 +216,7 @@ mod tests {
                 map![
                     "name": "metric_without_timestamp",
                     "value": 12.47,
+                    "type": "untyped",
                     "labels": map!["foo": "bar"],
                 ],
             ]),
@@ -217,6 +232,7 @@ mod tests {
                 map![
                     "name": "metric_without_timestamp",
                     "value": 12.47,
+                    "type": "untyped",
                     "labels": map!["foo": "bar"],
                     "timestamp": 1642734900,
                 ],

@@ -136,6 +136,16 @@ impl GroupKind {
         }
     }
 
+    pub fn type_to_str(&self) -> &'static str {
+        match self {
+            Self::Histogram { .. } => "histogram",
+            Self::Summary { .. } => "summary",
+            Self::Counter { .. } => "counter",
+            Self::Gauge { .. } => "gauge",
+            Self::Untyped { .. } => "untyped",
+        }
+    }
+
     /// Err(_) if there are irrecoverable error.
     /// Ok(Some(metric)) if this metric belongs to another group.
     /// Ok(None) pushed successfully.
