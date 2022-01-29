@@ -177,7 +177,10 @@ mod tests {
         //    - gauge
         //    - histogram
         //    - summary
-        no_labels_gauge_valid {
+
+        // Untyped
+
+        no_labels_untyped_valid {
             args: func_args![value: r#"metric_without_timestamp_and_labels 12.47"#],
             want: Ok(vec![
                 map![
@@ -193,7 +196,7 @@ mod tests {
             tz: shared::TimeZone::default(),
         }
 
-        no_labels_gauge_with_timestamp_valid {
+        no_labels_untyped_with_timestamp_valid {
             args: func_args![value: r#"metric_with_timestamp_and_no_labels 12.47 1642734998"#],
             want: Ok(vec![
                 map![
@@ -210,7 +213,7 @@ mod tests {
             tz: shared::TimeZone::default(),
         }
 
-        labels_gauge_valid {
+        labels_untyped_valid {
             args: func_args![value: r#"metric_without_timestamp{foo="bar"} 12.47"#],
             want: Ok(vec![
                 map![
@@ -226,7 +229,7 @@ mod tests {
             tz: shared::TimeZone::default(),
         }
 
-        labels_gauge_with_timestamp_valid {
+        labels_untyped_with_timestamp_valid {
             args: func_args![value: r#"metric_without_timestamp{foo="bar"} 12.47 1642734900"#],
             want: Ok(vec![
                 map![
@@ -234,6 +237,84 @@ mod tests {
                     "value": 12.47,
                     "type": "untyped",
                     "labels": map!["foo": "bar"],
+                    "timestamp": 1642734900,
+                ],
+            ]),
+            tdef: TypeDef::new().fallible().array::<TypeDef>(vec![
+                TypeDef::new().object::<&str, TypeDef>(inner_type_def())
+            ]),
+            tz: shared::TimeZone::default(),
+        }
+
+        // Counters
+
+        no_labels_counter_valid {
+            args: func_args![value: r##"
+                # HELP metric_without_timestamp_and_labels My Counter
+                # TYPE metric_without_timestamp_and_labels counter
+                metric_without_timestamp_and_labels 12
+                "##],
+            want: Ok(vec![
+                map![
+                    "name": "metric_without_timestamp_and_labels",
+                    "value": 12.0,
+                    "type": "counter",
+                    "labels": map![],
+                ],
+            ]),
+            tdef: TypeDef::new().fallible().array::<TypeDef>(vec![
+                TypeDef::new().object::<&str, TypeDef>(inner_type_def())
+            ]),
+            tz: shared::TimeZone::default(),
+        }
+
+        labels_counter_valid {
+            args: func_args![value: r##"
+                # HELP metric_without_timestamp_with_labels My Counter
+                # TYPE metric_without_timestamp_with_labels counter
+                metric_without_timestamp_with_labels{foo="bar"} 12
+                metric_without_timestamp_with_labels{foo="baz"} 20
+                "##],
+            want: Ok(vec![
+                map![
+                    "name": "metric_without_timestamp_with_labels",
+                    "value": 12.0,
+                    "type": "counter",
+                    "labels": map!["foo": "bar"],
+                ],
+                map![
+                    "name": "metric_without_timestamp_with_labels",
+                    "value": 20.0,
+                    "type": "counter",
+                    "labels": map!["foo": "baz"],
+                ],
+            ]),
+            tdef: TypeDef::new().fallible().array::<TypeDef>(vec![
+                TypeDef::new().object::<&str, TypeDef>(inner_type_def())
+            ]),
+            tz: shared::TimeZone::default(),
+        }
+
+        labels_counter_with_timestamp_valid {
+            args: func_args![value: r##"
+                # HELP metric_without_timestamp_with_labels My Counter
+                # TYPE metric_without_timestamp_with_labels counter
+                metric_without_timestamp_with_labels{foo="bar"} 12 1642734900
+                metric_without_timestamp_with_labels{foo="baz"} 20 1642734900
+                "##],
+            want: Ok(vec![
+                map![
+                    "name": "metric_without_timestamp_with_labels",
+                    "value": 12.0,
+                    "type": "counter",
+                    "labels": map!["foo": "bar"],
+                    "timestamp": 1642734900,
+                ],
+                map![
+                    "name": "metric_without_timestamp_with_labels",
+                    "value": 20.0,
+                    "type": "counter",
+                    "labels": map!["foo": "baz"],
                     "timestamp": 1642734900,
                 ],
             ]),
